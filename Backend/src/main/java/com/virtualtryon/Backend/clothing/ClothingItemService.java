@@ -17,8 +17,8 @@ public class ClothingItemService {
     private final CloudinaryService cloudinaryService;
 
     public ClothingItemService(ClothingItemRepository clothingItemRepository,
-                                CategoryRepository categoryRepository,
-                                CloudinaryService cloudinaryService) {
+            CategoryRepository categoryRepository,
+            CloudinaryService cloudinaryService) {
         this.clothingItemRepository = clothingItemRepository;
         this.categoryRepository = categoryRepository;
         this.cloudinaryService = cloudinaryService;
@@ -37,7 +37,7 @@ public class ClothingItemService {
     }
 
     public ClothingItem uploadClothingItem(User user, Long categoryId,
-                                            String name, MultipartFile image) throws IOException {
+            String name, String bodyPart, MultipartFile image) throws IOException {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
@@ -53,15 +53,23 @@ public class ClothingItemService {
         item.setName(name);
         item.setImageUrl(imageUrl);
 
+        if (bodyPart == null || bodyPart.trim().isEmpty()) {
+            bodyPart = "upper_body"; // fallback
+        }
+        item.setBodyPart(bodyPart);
+
         return clothingItemRepository.save(item);
     }
 
     public ClothingItem updateClothingItem(Long id, Long userId,
-                                            Long categoryId, String name) {
+            Long categoryId, String name, String bodyPart) {
         ClothingItem item = clothingItemRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new RuntimeException("Clothing item not found"));
 
-        if (name != null) item.setName(name);
+        if (name != null)
+            item.setName(name);
+        if (bodyPart != null)
+            item.setBodyPart(bodyPart);
 
         if (categoryId != null) {
             Category category = categoryRepository.findById(categoryId)

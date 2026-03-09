@@ -32,8 +32,11 @@ public class TryOnController {
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody Map<String, Object> body) throws Exception {
         User user = getCurrentUser(userDetails);
-        Long clothingItemId = Long.valueOf(body.get("clothingItemId").toString());
-        return ResponseEntity.ok(tryOnService.runTryOn(user, clothingItemId));
+
+        List<Integer> intIds = (List<Integer>) body.get("clothingItemIds");
+        List<Long> clothingItemIds = intIds.stream().map(Integer::longValue).toList();
+
+        return ResponseEntity.ok(tryOnService.runTryOn(user, clothingItemIds));
     }
 
     @GetMapping

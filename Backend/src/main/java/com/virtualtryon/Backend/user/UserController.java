@@ -7,7 +7,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.virtualtryon.Backend.auth.JwtService;
 import java.io.IOException;
+import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/user")
@@ -16,11 +20,14 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final CloudinaryService cloudinaryService;
+    private final JwtService jwtService;
 
     public UserController(UserRepository userRepository,
-                          CloudinaryService cloudinaryService) {
+            CloudinaryService cloudinaryService,
+            JwtService jwtService) {
         this.userRepository = userRepository;
         this.cloudinaryService = cloudinaryService;
+        this.jwtService = jwtService;
     }
 
     @GetMapping("/profile")
@@ -41,5 +48,38 @@ public class UserController {
         user.setProfilePhotoUrl(photoUrl);
         userRepository.save(user);
         return ResponseEntity.ok(user);
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody ProfileUpdateRequest request) {
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean emailChanged = false;
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
+            Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
+            if (existingUser.isPresent()) {
+                return ResponseEntity.badRequest().body("Email is already in use.");
+            }
+            user.setEmail(request.getEmail());
+            emailChanged = true;
+        }
+
+        if (request.getFullName() != null && !request.getFullName().isBlank()) {
+            user.setFullName(request.getFullName());
+        }
+
+        userRepository.save(user);
+        Map<String, Object> response = new HashMap<>();
+        response.put("user", user);
+
+        if (emailChanged) {
+            String newToken = jwtService.generateToken(user.getEmail());
+            response.put("token", newToken);
+        }
+
+        return ResponseEntity.ok(response);
     }
 }

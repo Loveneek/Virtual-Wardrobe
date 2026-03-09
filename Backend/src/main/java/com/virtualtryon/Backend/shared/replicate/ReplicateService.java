@@ -19,7 +19,7 @@ public class ReplicateService {
     private static final String REPLICATE_URL = "https://api.replicate.com/v1/predictions";
     private static final String MODEL_VERSION = "c871bb9b046607b680449ecbae55fd8c6d945e0a1948644bf2361b3d021d3ff4";
 
-    public String runTryOn(String personImageUrl, String clothingImageUrl) throws Exception {
+    public String runTryOn(String personImageUrl, String clothingImageUrl, String category) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(apiToken);
@@ -27,22 +27,22 @@ public class ReplicateService {
         Map<String, Object> input = Map.of(
                 "human_img", personImageUrl,
                 "garm_img", clothingImageUrl,
-                "garment_des", "clothing item"
-        );
+                "garment_des", "clothing item",
+                "category", category);
 
         Map<String, Object> body = Map.of(
                 "version", MODEL_VERSION,
-                "input", input
-        );
+                "input", input);
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-        
+
         ResponseEntity<Map> response;
         try {
             response = restTemplate.postForEntity(REPLICATE_URL, request, Map.class);
         } catch (HttpStatusCodeException e) {
             if (e.getStatusCode() == HttpStatus.PAYMENT_REQUIRED) {
-                throw new RuntimeException("Insufficient Replicate credits to run this model. Please top up your Replicate account.");
+                throw new RuntimeException(
+                        "Insufficient Replicate credits to run this model. Please top up your Replicate account.");
             }
             throw new RuntimeException("Replicate API error: " + e.getResponseBodyAsString());
         }

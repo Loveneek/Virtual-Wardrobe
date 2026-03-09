@@ -23,8 +23,8 @@ public class ClothingItemController {
     private final GeminiService geminiService;
 
     public ClothingItemController(ClothingItemService clothingItemService,
-                                   UserRepository userRepository,
-                                   GeminiService geminiService) {
+            UserRepository userRepository,
+            GeminiService geminiService) {
         this.clothingItemService = clothingItemService;
         this.userRepository = userRepository;
         this.geminiService = geminiService;
@@ -40,8 +40,8 @@ public class ClothingItemController {
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestPart("image") MultipartFile image) throws IOException {
         String mimeType = image.getContentType() != null ? image.getContentType() : "image/jpeg";
-        String category = geminiService.detectCategory(image.getBytes(), mimeType);
-        return ResponseEntity.ok(Map.of("category", category));
+        Map<String, String> detectionResult = geminiService.detectCategory(image.getBytes(), mimeType);
+        return ResponseEntity.ok(detectionResult);
     }
 
     @GetMapping
@@ -65,10 +65,11 @@ public class ClothingItemController {
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam Long categoryId,
             @RequestParam String name,
+            @RequestParam(required = false) String bodyPart,
             @RequestPart("image") MultipartFile image) throws IOException {
         User user = getCurrentUser(userDetails);
         return ResponseEntity.ok(
-                clothingItemService.uploadClothingItem(user, categoryId, name, image));
+                clothingItemService.uploadClothingItem(user, categoryId, name, bodyPart, image));
     }
 
     @PutMapping("/{id}")
@@ -76,10 +77,11 @@ public class ClothingItemController {
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) String name) {
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String bodyPart) {
         User user = getCurrentUser(userDetails);
         return ResponseEntity.ok(
-                clothingItemService.updateClothingItem(id, user.getId(), categoryId, name));
+                clothingItemService.updateClothingItem(id, user.getId(), categoryId, name, bodyPart));
     }
 
     @DeleteMapping("/{id}")
