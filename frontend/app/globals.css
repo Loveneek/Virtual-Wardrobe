@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    /* This ensures the base isn't stark white */
+    background-color: #f8fafc; 
+    color: #000000;
+  }
+}
